@@ -1,0 +1,18 @@
+/* Design tokens ported verbatim from the prototype (index.html :root). */
+:root {
+  --bg: #fafaf9; --bg-elev: #ffffff; --bg-sunken: #f4f4f2; --bg-hover: #f0efed;
+  --border: #e7e5e0; --border-strong: #d6d3cc;
+  --text: #1a1a18; --text-secondary: #595956; --text-tertiary: #8a8a86;
+  --accent: #1f2a44; --accent-soft: #eef0f5;
+  --green: #1f6f43; --green-soft: #e5efe8;
+  --amber: #9c6b1f; --amber-soft: #f5ede0;
+  --red: #a8392a; --red-soft: #f4e6e3;
+  --blue: #2a4d7a; --blue-soft: #e7ecf3;
+  --gray: #6b6b67; --gray-soft: #ececea;
+  --radius: 8px; --radius-lg: 12px;
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font-sans); color: var(--text); background: var(--bg); font-size: 14px; }
+a { color: inherit; }
