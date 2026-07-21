@@ -6,40 +6,53 @@ import { ROLE_LABEL, type Role } from "@/auth/permissions";
 
 const DEMO_PASSWORD = "Demo123!"; // seeded for every Digital Hub user
 
-const ROLE_COLOR: Record<string, { bg: string; fg: string }> = {
-  Admin: { bg: "var(--accent-soft)", fg: "var(--accent)" },
-  ComplianceOfficer: { bg: "var(--blue-soft)", fg: "var(--blue)" },
-  DepartmentLead: { bg: "var(--green-soft)", fg: "var(--green)" },
-  Auditor: { bg: "var(--amber-soft)", fg: "var(--amber)" },
-  Executive: { bg: "var(--gray-soft)", fg: "var(--gray)" },
-};
-
 export function LoginPage() {
   const login = useAuth((s) => s.login);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  async function pick(u: { name: string; email: string; role: string; title: string }) {
+  async function signIn(e: React.FormEvent) {
+    e.preventDefault();
     setErr(null);
+
     if (DEMO) {
-      login({ ...u, role: u.role as Role });   // offline demo: local session
+      const match = demo.users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+      if (!match || password !== DEMO_PASSWORD) {
+        setErr("Invalid email or password.");
+        return;
+      }
+      login({ ...match, role: match.role as Role });
       return;
     }
-    // Real mode: authenticate against the .NET API
-    setBusy(u.email);
+
+    setBusy(true);
     try {
-      const res = await apiLogin(u.email, DEMO_PASSWORD);
+      const res = await apiLogin(email.trim(), password);
       login({ name: res.name, email: res.email, role: res.role, title: res.title ?? "" });
     } catch {
       setErr("Could not reach the API. Is the backend running on :5080?");
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
+  function quickFill(userEmail: string) {
+    setErr(null);
+    setEmail(userEmail);
+    setPassword(DEMO_PASSWORD);
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "10px 12px", borderRadius: 8,
+    border: "1px solid var(--border)", background: "var(--bg-elev)",
+    fontSize: 14, boxSizing: "border-box",
+  };
+
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--bg-sunken)" }}>
-      <div style={{ width: 520, maxWidth: "92vw" }}>
+      <div style={{ width: 420, maxWidth: "92vw" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ fontWeight: 700, fontSize: 24 }}>Conformix</div>
           <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 4 }}>
@@ -47,40 +60,57 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: 14, padding: 18 }}>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>
-            {DEMO ? "Demo · choose a user to preview their role and permissions"
-                  : "Choose a user to sign in via the API"}
-          </div>
-          {err && <div style={{ background: "var(--red-soft)", color: "var(--red)", padding: "8px 10px", borderRadius: 8, fontSize: 12, marginBottom: 10 }}>{err}</div>}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {demo.users.map((u) => {
-              const c = ROLE_COLOR[u.role] ?? ROLE_COLOR.Executive;
-              return (
-                <button key={u.email} onClick={() => pick(u)} disabled={busy === u.email}
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px",
-                    background: "var(--bg-elev)", textAlign: "left", opacity: busy === u.email ? 0.6 : 1,
-                  }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{
-                      width: 34, height: 34, borderRadius: 999, background: c.bg, color: c.fg,
-                      display: "grid", placeItems: "center", fontWeight: 700, fontSize: 13,
-                    }}>{u.name.split(" ").map((n) => n[0]).join("")}</span>
-                    <span>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{u.name}</div>
-                      <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{u.title}</div>
-                    </span>
-                  </span>
-                  <span style={{ background: c.bg, color: c.fg, padding: "3px 10px", borderRadius: 999, fontWeight: 600, fontSize: 12 }}>
-                    {ROLE_LABEL[u.role as Role]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <form onSubmit={signIn}
+          style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
+          {err && (
+            <div style={{ background: "var(--red-soft)", color: "var(--red)", padding: "8px 10px", borderRadius: 8, fontSize: 12, marginBottom: 14 }}>
+              {err}
+            </div>
+          )}
+
+          <label style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", marginBottom: 6 }}>Email</label>
+          <input
+            type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@digitalhub.example" required autoComplete="username"
+            style={{ ...inputStyle, marginBottom: 14 }}
+          />
+
+          <label style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", marginBottom: 6 }}>Password</label>
+          <input
+            type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••" required autoComplete="current-password"
+            style={{ ...inputStyle, marginBottom: 18 }}
+          />
+
+          <button type="submit" disabled={busy}
+            style={{
+              width: "100%", padding: "10px 12px", borderRadius: 8, border: "none",
+              background: "var(--accent)", color: "#fff", fontWeight: 600, fontSize: 14,
+              cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1,
+            }}>
+            {busy ? "Signing in…" : "Sign in"}
+          </button>
+
+          {DEMO && (
+            <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px dashed var(--border)" }}>
+              <label style={{ display: "block", fontSize: 11, color: "var(--text-tertiary)", marginBottom: 6 }}>
+                Dev helper (temporary) — pick a demo user to auto-fill their credentials
+              </label>
+              <select
+                defaultValue=""
+                onChange={(e) => { if (e.target.value) quickFill(e.target.value); e.target.value = ""; }}
+                style={{ ...inputStyle, cursor: "pointer" }}
+              >
+                <option value="" disabled>Choose a demo user…</option>
+                {demo.users.map((u) => (
+                  <option key={u.email} value={u.email}>
+                    {u.name} · {u.title} ({ROLE_LABEL[u.role as Role]})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </form>
       </div>
     </div>
   );
