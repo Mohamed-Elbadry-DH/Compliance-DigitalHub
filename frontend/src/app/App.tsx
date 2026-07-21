@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { ControlsPage } from "@/features/controls/ControlsPage";
 import { RisksPage } from "@/features/risks/RisksPage";
@@ -25,7 +25,7 @@ export function App() {
   if (!user) return <LoginPage />;   // gate the whole app behind sign-in
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <div style={{ display: "flex", minHeight: "100vh" }}>
         <Sidebar />
         <main style={{ flex: 1 }}>
@@ -46,7 +46,7 @@ export function App() {
           </Routes>
         </main>
       </div>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 
