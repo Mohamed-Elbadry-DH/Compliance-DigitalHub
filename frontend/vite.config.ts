@@ -8,5 +8,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: { "/api": "http://localhost:5080" }, // dev: proxy to the .NET API
+    allowedHosts: true, // dev server runs behind dynamic sandbox hosts (v0.app, etc.)
   },
 });
